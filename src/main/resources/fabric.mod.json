@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "cabinfever",
+	"version": "${version}",
+	"name": "Cabin Fever",
+	"description": "A winter survival minigame for Minecraft.",
+	"authors": [
+		"haykam821"
+	],
+	"contact": {
+		"homepage": "https://github.com/haykam821/Cabin-Fever#readme",
+		"issues": "https://github.com/haykam821/Cabin-Fever/issues"
+	},
+	"entrypoints": {
+		"main": [
+			"io.github.haykam821.cabinfever.Main"
+		]
+	},
+	"license": "MIT",
+	"icon": "assets/cabinfever/icon.png",
+	"depends": {
+		"fabricloader": ">=0.4.0",
+		"plasmid": ">=0.4.0"
+	}
+}

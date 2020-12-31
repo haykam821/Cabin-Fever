@@ -1,0 +1,13 @@
+{
+	"type": "cabinfever:cabin_fever",
+	"name": "Cabin Fever",
+	"map": {
+		"x": 47,
+		"z": 47
+	},
+	"players": {
+		"min": 1,
+		"max": 16,
+		"threshold": 4
+	}
+}
