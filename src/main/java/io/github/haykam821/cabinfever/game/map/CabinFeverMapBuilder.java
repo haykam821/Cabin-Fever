@@ -75,9 +75,9 @@ public class CabinFeverMapBuilder {
 		BlockPos.Mutable pos = new BlockPos.Mutable();
 		for (int x = -2; x < 3; x++) {
 			for (int z = -2; z < 3; z++) {
-				for (int y = 1; y < 4; y++) {
+				for (int y = 1; y < 6; y++) {
 					pos.set(center.getX() + x, y, center.getZ() + z);
-					if (y == 3) {
+					if (y == 5) {
 						template.setBlockState(pos, ROOF);
 					} else if ((x == -2 || x == 2) && (z == -2 || z == 2)) {
 						template.setBlockState(pos, PILLAR);
