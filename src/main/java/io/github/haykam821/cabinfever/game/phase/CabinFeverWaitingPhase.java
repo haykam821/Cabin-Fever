@@ -16,6 +16,7 @@ import xyz.nucleoid.plasmid.game.StartResult;
 import xyz.nucleoid.plasmid.game.config.PlayerConfig;
 import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
 import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
+import xyz.nucleoid.plasmid.game.event.PlayerDamageListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.event.RequestStartListener;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
@@ -52,6 +53,7 @@ public class CabinFeverWaitingPhase {
 
 			// Listeners
 			game.on(PlayerAddListener.EVENT, phase::addPlayer);
+			game.on(PlayerDamageListener.EVENT, phase::onPlayerDamage);
 			game.on(PlayerDeathListener.EVENT, phase::onPlayerDeath);
 			game.on(OfferPlayerListener.EVENT, phase::offerPlayer);
 			game.on(RequestStartListener.EVENT, phase::requestStart);
@@ -78,6 +80,10 @@ public class CabinFeverWaitingPhase {
 
 	private void addPlayer(ServerPlayerEntity player) {
 		CabinFeverActivePhase.spawn(this.gameSpace.getWorld(), this.map, player);
+	}
+
+	private ActionResult onPlayerDamage(ServerPlayerEntity player, DamageSource source, float amount) {
+		return ActionResult.FAIL;
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
