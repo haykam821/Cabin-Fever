@@ -203,9 +203,9 @@ public class CabinFeverActivePhase {
 			
 			Text deathMessage = source.getDeathMessage(player).shallowCopy().formatted(Formatting.RED);
 			this.gameSpace.getPlayers().sendMessage(deathMessage);
-		} else {
-			CabinFeverActivePhase.spawn(this.world, this.map, player);
 		}
+
+		CabinFeverActivePhase.spawn(this.world, this.map, player);
 		return ActionResult.FAIL;
 	}
 
