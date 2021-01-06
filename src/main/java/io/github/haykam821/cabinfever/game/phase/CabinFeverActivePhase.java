@@ -29,6 +29,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
+import xyz.nucleoid.plasmid.entity.FloatingText;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameLogic;
 import xyz.nucleoid.plasmid.game.GameSpace;
@@ -48,17 +49,19 @@ public class CabinFeverActivePhase {
 	private final GameSpace gameSpace;
 	private final CabinFeverMap map;
 	private final CabinFeverConfig config;
+	private final FloatingText guideText;
 	private final Set<PlayerRef> players;
 	private final Object2IntOpenHashMap<PlayerRef> coalAmounts = new Object2IntOpenHashMap<>();
 	private boolean singleplayer;
 	private boolean opened;
 	private int ticks = 0;
 
-	public CabinFeverActivePhase(GameSpace gameSpace, CabinFeverMap map, CabinFeverConfig config, Set<PlayerRef> players) {
+	public CabinFeverActivePhase(GameSpace gameSpace, CabinFeverMap map, CabinFeverConfig config, FloatingText guideText, Set<PlayerRef> players) {
 		this.world = gameSpace.getWorld();
 		this.gameSpace = gameSpace;
 		this.map = map;
 		this.config = config;
+		this.guideText = guideText;
 
 		this.players = players;
 		this.coalAmounts.defaultReturnValue(this.config.getMaxCoal());
@@ -74,9 +77,9 @@ public class CabinFeverActivePhase {
 		game.setRule(GameRule.THROW_ITEMS, RuleResult.DENY);
 	}
 
-	public static void open(GameSpace gameSpace, CabinFeverMap map, CabinFeverConfig config) {
+	public static void open(GameSpace gameSpace, CabinFeverMap map, CabinFeverConfig config, FloatingText guide) {
 		Set<PlayerRef> players = gameSpace.getPlayers().stream().map(PlayerRef::of).collect(Collectors.toSet());
-		CabinFeverActivePhase phase = new CabinFeverActivePhase(gameSpace, map, config, players);
+		CabinFeverActivePhase phase = new CabinFeverActivePhase(gameSpace, map, config, guide, players);
 
 		gameSpace.openGame(game -> {
 			CabinFeverActivePhase.setRules(game);
@@ -131,9 +134,12 @@ public class CabinFeverActivePhase {
 
 	private void tick() {
 		this.ticks += 1;
-		boolean decrementCoal = this.ticks % 60 == 0;
+		if (this.guideText != null && ticks == this.config.getGuideTicks()) {
+			this.guideText.remove();
+		}
 
 		// Eliminate players that do not have enough coal
+		boolean decrementCoal = this.ticks % 60 == 0;
 		Iterator<PlayerRef> playerIterator = this.players.iterator();
 		while (playerIterator.hasNext()) {
 			PlayerRef playerRef = playerIterator.next();
@@ -253,7 +259,7 @@ public class CabinFeverActivePhase {
 	}
 
 	public static void spawn(ServerWorld world, CabinFeverMap map, ServerPlayerEntity player) {
-		Vec3d center = Vec3d.of(map.getCenter()).add(0.5, 0, 1.5);
-		player.teleport(world, center.getX(), 1, center.getZ(), 0, 0);
+		Vec3d spawnPos = Vec3d.of(map.getCenter()).add(0.5, 0, 1.5);
+		player.teleport(world, spawnPos.getX(), 1, spawnPos.getZ(), 0, 0);
 	}
 }
