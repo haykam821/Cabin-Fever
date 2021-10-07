@@ -28,7 +28,6 @@ import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.event.RequestStartListener;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
-import xyz.nucleoid.plasmid.game.rule.RuleResult;
 
 public class CabinFeverWaitingPhase {
 	private static final Formatting GUIDE_FORMATTING = Formatting.GOLD;
@@ -62,19 +61,19 @@ public class CabinFeverWaitingPhase {
 			.setDefaultGameMode(GameMode.ADVENTURE);
 
 		return context.createOpenProcedure(worldConfig, game -> {
-			CabinFeverWaitingPhase phase = new CabinFeverWaitingPhase(game.getSpace(), map, context.getConfig());
+			CabinFeverWaitingPhase phase = new CabinFeverWaitingPhase(game.getGameSpace(), map, context.getConfig());
 			GameWaitingLobby.applyTo(game, context.getConfig().getPlayerConfig());
 
 			CabinFeverActivePhase.setRules(game);
-			game.setRule(GameRule.PVP, RuleResult.DENY);
+			game.deny(GameRule.PVP);
 
 			// Listeners
-			game.on(PlayerAddListener.EVENT, phase::addPlayer);
-			game.on(PlayerDamageListener.EVENT, phase::onPlayerDamage);
-			game.on(PlayerDeathListener.EVENT, phase::onPlayerDeath);
-			game.on(GameOpenListener.EVENT, phase::open);
-			game.on(OfferPlayerListener.EVENT, phase::offerPlayer);
-			game.on(RequestStartListener.EVENT, phase::requestStart);
+			game.listen(PlayerAddListener.EVENT, phase::addPlayer);
+			game.listen(PlayerDamageListener.EVENT, phase::onPlayerDamage);
+			game.listen(PlayerDeathListener.EVENT, phase::onPlayerDeath);
+			game.listen(GameOpenListener.EVENT, phase::open);
+			game.listen(OfferPlayerListener.EVENT, phase::offerPlayer);
+			game.listen(RequestStartListener.EVENT, phase::requestStart);
 		});
 	}
 
