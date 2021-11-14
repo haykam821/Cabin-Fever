@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.cabinfever.game.map.CabinFeverMapConfig;
-import xyz.nucleoid.plasmid.game.config.PlayerConfig;
+import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 
 public class CabinFeverConfig {
 	public static final Codec<CabinFeverConfig> CODEC = RecordCodecBuilder.create(instance -> {

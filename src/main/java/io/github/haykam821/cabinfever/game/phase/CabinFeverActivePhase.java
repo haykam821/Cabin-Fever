@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import eu.pb4.holograms.api.holograms.AbstractHologram;
 import io.github.haykam821.cabinfever.game.CabinFeverConfig;
 import io.github.haykam821.cabinfever.game.map.CabinFeverMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -29,34 +30,33 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
-import xyz.nucleoid.plasmid.entity.FloatingText;
+import xyz.nucleoid.plasmid.game.GameActivity;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
-import xyz.nucleoid.plasmid.game.GameLogic;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.event.BreakBlockListener;
-import xyz.nucleoid.plasmid.game.event.GameOpenListener;
-import xyz.nucleoid.plasmid.game.event.GameTickListener;
-import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
-import xyz.nucleoid.plasmid.game.event.UseBlockListener;
-import xyz.nucleoid.plasmid.game.rule.GameRule;
+import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.game.player.PlayerOffer;
+import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
+import xyz.nucleoid.plasmid.game.rule.GameRuleType;
 import xyz.nucleoid.plasmid.util.ItemStackBuilder;
 import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.stimuli.event.block.BlockBreakEvent;
+import xyz.nucleoid.stimuli.event.block.BlockUseEvent;
+import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 public class CabinFeverActivePhase {
 	private final ServerWorld world;
 	private final GameSpace gameSpace;
 	private final CabinFeverMap map;
 	private final CabinFeverConfig config;
-	private final FloatingText guideText;
+	private final AbstractHologram guideText;
 	private final Set<PlayerRef> players;
 	private final Object2IntOpenHashMap<PlayerRef> coalAmounts = new Object2IntOpenHashMap<>();
 	private boolean singleplayer;
-	private boolean opened;
 	private int ticks = 0;
 
-	public CabinFeverActivePhase(GameSpace gameSpace, CabinFeverMap map, CabinFeverConfig config, FloatingText guideText, Set<PlayerRef> players) {
-		this.world = gameSpace.getWorld();
+	public CabinFeverActivePhase(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config, AbstractHologram guideText, Set<PlayerRef> players) {
+		this.world = world;
 		this.gameSpace = gameSpace;
 		this.map = map;
 		this.config = config;
@@ -66,35 +66,35 @@ public class CabinFeverActivePhase {
 		this.coalAmounts.defaultReturnValue(this.config.getMaxCoal());
 	}
 
-	public static void setRules(GameLogic game) {
-		game.deny(GameRule.BLOCK_DROPS);
-		game.deny(GameRule.CRAFTING);
-		game.deny(GameRule.FALL_DAMAGE);
-		game.deny(GameRule.HUNGER);
-		game.deny(GameRule.PORTALS);
-		game.allow(GameRule.PVP);
-		game.deny(GameRule.THROW_ITEMS);
+	public static void setRules(GameActivity activity) {
+		activity.deny(GameRuleType.BLOCK_DROPS);
+		activity.deny(GameRuleType.CRAFTING);
+		activity.deny(GameRuleType.FALL_DAMAGE);
+		activity.deny(GameRuleType.HUNGER);
+		activity.deny(GameRuleType.PORTALS);
+		activity.allow(GameRuleType.PVP);
+		activity.deny(GameRuleType.THROW_ITEMS);
 	}
 
-	public static void open(GameSpace gameSpace, CabinFeverMap map, CabinFeverConfig config, FloatingText guide) {
+	public static void open(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config, AbstractHologram guide) {
 		Set<PlayerRef> players = gameSpace.getPlayers().stream().map(PlayerRef::of).collect(Collectors.toSet());
-		CabinFeverActivePhase phase = new CabinFeverActivePhase(gameSpace, map, config, guide, players);
+		CabinFeverActivePhase phase = new CabinFeverActivePhase(gameSpace, world, map, config, guide, players);
 
-		gameSpace.openGame(game -> {
-			CabinFeverActivePhase.setRules(game);
+		gameSpace.setActivity(activity -> {
+			CabinFeverActivePhase.setRules(activity);
 
 			// Listeners
-			game.listen(BreakBlockListener.EVENT, phase::onBreakBlock);
-			game.listen(GameOpenListener.EVENT, phase::open);
-			game.listen(GameTickListener.EVENT, phase::tick);
-			game.listen(PlayerAddListener.EVENT, phase::addPlayer);
-			game.listen(PlayerDeathListener.EVENT, phase::onPlayerDeath);
-			game.listen(UseBlockListener.EVENT, phase::onUseBlock);
+			activity.listen(BlockBreakEvent.EVENT, phase::onBreakBlock);
+			activity.listen(GameActivityEvents.ENABLE, phase::enable);
+			activity.listen(GameActivityEvents.TICK, phase::tick);
+			activity.listen(GamePlayerEvents.OFFER, phase::offerPlayer);
+			activity.listen(GamePlayerEvents.REMOVE, phase::removePlayer);
+			activity.listen(PlayerDeathEvent.EVENT, phase::onPlayerDeath);
+			activity.listen(BlockUseEvent.EVENT, phase::onUseBlock);
 		});
 	}
 
-	private void open() {
-		this.opened = true;
+	private void enable() {
 		this.singleplayer = this.players.size() == 1;
 
 		ItemStack sword = ItemStackBuilder.of(Items.WOODEN_SWORD)
@@ -109,7 +109,7 @@ public class CabinFeverActivePhase {
 
  		for (PlayerRef playerRef : this.players) {
 			playerRef.ifOnline(this.world, player -> {
-				player.setGameMode(GameMode.ADVENTURE);
+				player.changeGameMode(GameMode.ADVENTURE);
 				CabinFeverActivePhase.spawn(this.world, this.map, player);
 
 				player.giveItemStack(sword.copy());
@@ -134,7 +134,7 @@ public class CabinFeverActivePhase {
 	private void tick() {
 		this.ticks += 1;
 		if (this.guideText != null && ticks == this.config.getGuideTicks()) {
-			this.guideText.remove();
+			this.guideText.hide();
 		}
 
 		// Eliminate players that do not have enough coal
@@ -172,19 +172,17 @@ public class CabinFeverActivePhase {
 		return new TranslatableText("text.cabinfever.no_winners").formatted(Formatting.GOLD);
 	}
 
-	private void setSpectator(PlayerEntity player) {
-		player.setGameMode(GameMode.SPECTATOR);
+	private void setSpectator(ServerPlayerEntity player) {
+		player.changeGameMode(GameMode.SPECTATOR);
 	}
 
-	private void addPlayer(PlayerEntity player) {
-		if (!this.players.contains(PlayerRef.of(player))) {
-			this.setSpectator(player);
-		} else if (this.opened) {
-			this.eliminate(player, true);
-		}
+	private PlayerOfferResult offerPlayer(PlayerOffer offer) {
+		return offer.accept(this.world, this.map.getSpawn()).and(() -> {
+			offer.player().changeGameMode(GameMode.SPECTATOR);
+		});
 	}
 
-	private void eliminate(PlayerEntity eliminatedPlayer, boolean remove) {
+	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
 		this.gameSpace.getPlayers().sendMessage(new TranslatableText("text.cabinfever.eliminated", eliminatedPlayer.getDisplayName()).formatted(Formatting.RED));
 
 		if (remove) {
@@ -193,11 +191,14 @@ public class CabinFeverActivePhase {
 		this.setSpectator(eliminatedPlayer);
 	}
 
+	private void removePlayer(ServerPlayerEntity player) {
+		this.eliminate(player, true);
+	}
+
 	private void clearCoal(ServerPlayerEntity player) {
-		player.inventory.remove(CabinFeverActivePhase::isCoal, -1, player.playerScreenHandler.method_29281());
+		player.getInventory().remove(CabinFeverActivePhase::isCoal, -1, player.playerScreenHandler.getCraftingInput());
 		player.currentScreenHandler.sendContentUpdates();
-		player.playerScreenHandler.onContentChanged(player.inventory);
-		player.updateCursorStack();
+		player.playerScreenHandler.onContentChanged(player.getInventory());
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
@@ -214,14 +215,14 @@ public class CabinFeverActivePhase {
 		return ActionResult.FAIL;
 	}
 
-	private ActionResult onBreakBlock(ServerPlayerEntity player, BlockPos pos) {
-		BlockState state = this.world.getBlockState(pos);
+	private ActionResult onBreakBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos) {
+		BlockState state = world.getBlockState(pos);
 
 		int coalAmount = CabinFeverActivePhase.getBlockCoalAmount(state);
 		if (coalAmount > 0) {
 			PlayerRef playerRef = PlayerRef.of(player);
 			if (this.players.contains(playerRef)) {
-				int coalUntilMax = this.config.getMaxHeldCoal() - player.inventory.count(Items.COAL);
+				int coalUntilMax = this.config.getMaxHeldCoal() - player.getInventory().count(Items.COAL);
 				player.giveItemStack(new ItemStack(Items.COAL, Math.min(coalAmount, coalUntilMax)));
 			}
 		}
@@ -234,7 +235,7 @@ public class CabinFeverActivePhase {
 		if (this.players.contains(playerRef)) {
 			BlockState state = this.world.getBlockState(hitResult.getBlockPos());
 			if (state.isIn(BlockTags.CAMPFIRES)) {
-				int heldCoal = player.inventory.count(Items.COAL);
+				int heldCoal = player.getInventory().count(Items.COAL);
 				int coalUntilMax = this.config.getMaxCoal() - this.coalAmounts.getInt(playerRef);
 
 				this.coalAmounts.addTo(playerRef, Math.min(heldCoal, coalUntilMax));
@@ -248,7 +249,7 @@ public class CabinFeverActivePhase {
 	}
 
 	private static boolean isCoal(ItemStack stack) {
-		return stack.getItem().isIn(ItemTags.COALS);
+		return stack.isIn(ItemTags.COALS);
 	}
 
 	private static int getBlockCoalAmount(BlockState state) {
@@ -258,7 +259,7 @@ public class CabinFeverActivePhase {
 	}
 
 	public static void spawn(ServerWorld world, CabinFeverMap map, ServerPlayerEntity player) {
-		Vec3d spawnPos = Vec3d.of(map.getCenter()).add(0.5, 0, 1.5);
-		player.teleport(world, spawnPos.getX(), 1, spawnPos.getZ(), 0, 0);
+		Vec3d spawn = map.getSpawn();
+		player.teleport(world, spawn.getX(), spawn.getY(), spawn.getZ(), 0, 0);
 	}
 }

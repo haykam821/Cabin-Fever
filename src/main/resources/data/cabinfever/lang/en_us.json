@@ -1,4 +1,5 @@
 {
+	"game.cabinfever.standard_cabin_fever": "Cabin Fever",
 	"gameType.cabinfever.cabin_fever": "Cabin Fever",
 	"text.cabinfever.eliminated": "%s has been eliminated!",
 	"text.cabinfever.guide.death_expends_coal_faster": "Getting killed expends your coal faster.",

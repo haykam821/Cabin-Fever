@@ -7,7 +7,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.BiomeKeys;
-import xyz.nucleoid.plasmid.map.template.MapTemplate;
+import xyz.nucleoid.map_templates.MapTemplate;
 
 public class CabinFeverMapBuilder {
 	private static final BlockState FLOOR = Blocks.SNOW_BLOCK.getDefaultState();

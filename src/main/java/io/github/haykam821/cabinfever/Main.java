@@ -10,7 +10,7 @@ public class Main implements ModInitializer {
 	private static final String MOD_ID = "cabinfever";
 
 	private static final Identifier CABIN_FEVER_ID = new Identifier(MOD_ID, "cabin_fever");
-	public static final GameType<CabinFeverConfig> CABIN_FEVER_TYPE = GameType.register(CABIN_FEVER_ID, CabinFeverWaitingPhase::open, CabinFeverConfig.CODEC);
+	public static final GameType<CabinFeverConfig> CABIN_FEVER_TYPE = GameType.register(CABIN_FEVER_ID, CabinFeverConfig.CODEC, CabinFeverWaitingPhase::open);
 
 	@Override
 	public void onInitialize() {
