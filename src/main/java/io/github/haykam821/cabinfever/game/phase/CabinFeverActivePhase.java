@@ -183,10 +183,13 @@ public class CabinFeverActivePhase {
 	}
 
 	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
+		PlayerRef eliminatedRef = PlayerRef.of(eliminatedPlayer);
+		if (!this.players.contains(eliminatedRef)) return;
+
 		this.gameSpace.getPlayers().sendMessage(new TranslatableText("text.cabinfever.eliminated", eliminatedPlayer.getDisplayName()).formatted(Formatting.RED));
 
 		if (remove) {
-			this.players.remove(PlayerRef.of(eliminatedPlayer));
+			this.players.remove(eliminatedRef);
 		}
 		this.setSpectator(eliminatedPlayer);
 	}
