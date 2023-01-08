@@ -10,7 +10,6 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
@@ -32,11 +31,11 @@ import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 public class CabinFeverWaitingPhase {
 	private static final Formatting GUIDE_FORMATTING = Formatting.GOLD;
 	private static final Text[] GUIDE_LINES = {
-		new TranslatableText("gameType.cabinfever.cabin_fever").formatted(GUIDE_FORMATTING).formatted(Formatting.BOLD),
-		new TranslatableText("text.cabinfever.guide.mine_coal").formatted(GUIDE_FORMATTING),
-		new TranslatableText("text.cabinfever.guide.place_coal_in_campfire").formatted(GUIDE_FORMATTING),
-		new TranslatableText("text.cabinfever.guide.dont_run_out_of_coal").formatted(GUIDE_FORMATTING),
-		new TranslatableText("text.cabinfever.guide.death_expends_coal_faster").formatted(GUIDE_FORMATTING),
+		Text.translatable("gameType.cabinfever.cabin_fever").formatted(GUIDE_FORMATTING).formatted(Formatting.BOLD),
+		Text.translatable("text.cabinfever.guide.mine_coal").formatted(GUIDE_FORMATTING),
+		Text.translatable("text.cabinfever.guide.place_coal_in_campfire").formatted(GUIDE_FORMATTING),
+		Text.translatable("text.cabinfever.guide.dont_run_out_of_coal").formatted(GUIDE_FORMATTING),
+		Text.translatable("text.cabinfever.guide.death_expends_coal_faster").formatted(GUIDE_FORMATTING),
 	};
 
 	private final GameSpace gameSpace;

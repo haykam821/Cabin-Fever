@@ -14,14 +14,13 @@ import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.tag.BlockTags;
-import net.minecraft.tag.ItemTags;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
@@ -166,10 +165,10 @@ public class CabinFeverActivePhase {
 			PlayerRef winnerRef = this.players.iterator().next();
 			if (winnerRef.isOnline(this.world)) {
 				PlayerEntity winner = winnerRef.getEntity(this.world);
-				return new TranslatableText("text.cabinfever.win", winner.getDisplayName()).formatted(Formatting.GOLD);
+				return Text.translatable("text.cabinfever.win", winner.getDisplayName()).formatted(Formatting.GOLD);
 			}
 		}
-		return new TranslatableText("text.cabinfever.no_winners").formatted(Formatting.GOLD);
+		return Text.translatable("text.cabinfever.no_winners").formatted(Formatting.GOLD);
 	}
 
 	private void setSpectator(ServerPlayerEntity player) {
@@ -186,7 +185,7 @@ public class CabinFeverActivePhase {
 		PlayerRef eliminatedRef = PlayerRef.of(eliminatedPlayer);
 		if (!this.players.contains(eliminatedRef)) return;
 
-		this.gameSpace.getPlayers().sendMessage(new TranslatableText("text.cabinfever.eliminated", eliminatedPlayer.getDisplayName()).formatted(Formatting.RED));
+		this.gameSpace.getPlayers().sendMessage(Text.translatable("text.cabinfever.eliminated", eliminatedPlayer.getDisplayName()).formatted(Formatting.RED));
 
 		if (remove) {
 			this.players.remove(eliminatedRef);
@@ -210,7 +209,7 @@ public class CabinFeverActivePhase {
 			this.coalAmounts.addTo(playerRef, -this.config.getDeathPrice());
 			this.clearCoal(player);
 			
-			Text deathMessage = source.getDeathMessage(player).shallowCopy().formatted(Formatting.RED);
+			Text deathMessage = source.getDeathMessage(player).copy().formatted(Formatting.RED);
 			this.gameSpace.getPlayers().sendMessage(deathMessage);
 		}
 
