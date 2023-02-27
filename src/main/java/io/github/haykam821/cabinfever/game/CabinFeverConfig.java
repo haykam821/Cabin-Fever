@@ -4,6 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.cabinfever.game.map.CabinFeverMapConfig;
+import net.minecraft.SharedConstants;
+import net.minecraft.util.math.intprovider.ConstantIntProvider;
+import net.minecraft.util.math.intprovider.IntProvider;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 
 public class CabinFeverConfig {
@@ -11,6 +14,7 @@ public class CabinFeverConfig {
 		return instance.group(
 			CabinFeverMapConfig.CODEC.fieldOf("map").forGetter(CabinFeverConfig::getMapConfig),
 			PlayerConfig.CODEC.fieldOf("players").forGetter(CabinFeverConfig::getPlayerConfig),
+			IntProvider.NON_NEGATIVE_CODEC.optionalFieldOf("ticks_until_close", ConstantIntProvider.create(SharedConstants.TICKS_PER_SECOND * 5)).forGetter(CabinFeverConfig::getTicksUntilClose),
 			Codec.INT.optionalFieldOf("guide_ticks", 20 * 30).forGetter(CabinFeverConfig::getGuideTicks),
 			Codec.INT.optionalFieldOf("max_coal", 32).forGetter(CabinFeverConfig::getMaxCoal),
 			Codec.INT.optionalFieldOf("max_held_coal", 8).forGetter(CabinFeverConfig::getMaxHeldCoal),
@@ -20,14 +24,16 @@ public class CabinFeverConfig {
 
 	private final CabinFeverMapConfig mapConfig;
 	private final PlayerConfig playerConfig;
+	private final IntProvider ticksUntilClose;
 	private final int guideTicks;
 	private final int maxCoal;
 	private final int maxHeldCoal;
 	private final int deathPrice;
 
-	public CabinFeverConfig(CabinFeverMapConfig mapConfig, PlayerConfig playerConfig, int guideTicks, int maxCoal, int maxHeldCoal, int deathPrice) {
+	public CabinFeverConfig(CabinFeverMapConfig mapConfig, PlayerConfig playerConfig, IntProvider ticksUntilClose, int guideTicks, int maxCoal, int maxHeldCoal, int deathPrice) {
 		this.mapConfig = mapConfig;
 		this.playerConfig = playerConfig;
+		this.ticksUntilClose = ticksUntilClose;
 		this.guideTicks = guideTicks;
 		this.maxCoal = maxCoal;
 		this.maxHeldCoal = maxHeldCoal;
@@ -40,6 +46,10 @@ public class CabinFeverConfig {
 
 	public PlayerConfig getPlayerConfig() {
 		return this.playerConfig;
+	}
+
+	public IntProvider getTicksUntilClose() {
+		return this.ticksUntilClose;
 	}
 
 	public int getGuideTicks() {

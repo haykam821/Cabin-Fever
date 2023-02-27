@@ -53,6 +53,7 @@ public class CabinFeverActivePhase {
 	private final Object2IntOpenHashMap<PlayerRef> coalAmounts = new Object2IntOpenHashMap<>();
 	private boolean singleplayer;
 	private int ticks = 0;
+	private int ticksUntilClose = -1;
 
 	public CabinFeverActivePhase(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config, AbstractHologram guideText, Set<PlayerRef> players) {
 		this.world = world;
@@ -131,6 +132,16 @@ public class CabinFeverActivePhase {
 	}
 
 	private void tick() {
+		// Decrease ticks until game end to zero
+		if (this.isGameEnding()) {
+			if (this.ticksUntilClose == 0) {
+				this.gameSpace.close(GameCloseReason.FINISHED);
+			}
+
+			this.ticksUntilClose -= 1;
+			return;
+		}
+
 		this.ticks += 1;
 		if (this.guideText != null && ticks == this.config.getGuideTicks()) {
 			this.guideText.hide();
@@ -156,7 +167,7 @@ public class CabinFeverActivePhase {
 		if (this.players.size() < 2) {
 			if (this.players.size() == 1 && this.singleplayer) return;
 			this.gameSpace.getPlayers().sendMessage(this.getEndingMessage());
-			this.gameSpace.close(GameCloseReason.FINISHED);
+			this.ticksUntilClose = this.config.getTicksUntilClose().get(this.world.getRandom());
 		}
 	}
 
@@ -171,6 +182,10 @@ public class CabinFeverActivePhase {
 		return Text.translatable("text.cabinfever.no_winners").formatted(Formatting.GOLD);
 	}
 
+	private boolean isGameEnding() {
+		return this.ticksUntilClose >= 0;
+	}
+
 	private void setSpectator(ServerPlayerEntity player) {
 		player.changeGameMode(GameMode.SPECTATOR);
 	}
@@ -182,6 +197,8 @@ public class CabinFeverActivePhase {
 	}
 
 	private void eliminate(ServerPlayerEntity eliminatedPlayer, boolean remove) {
+		if (this.isGameEnding()) return;
+
 		PlayerRef eliminatedRef = PlayerRef.of(eliminatedPlayer);
 		if (!this.players.contains(eliminatedRef)) return;
 
@@ -204,13 +221,15 @@ public class CabinFeverActivePhase {
 	}
 
 	private ActionResult onPlayerDeath(ServerPlayerEntity player, DamageSource source) {
-		PlayerRef playerRef = PlayerRef.of(player);
-		if (this.players.contains(playerRef)) {
-			this.coalAmounts.addTo(playerRef, -this.config.getDeathPrice());
-			this.clearCoal(player);
-			
-			Text deathMessage = source.getDeathMessage(player).copy().formatted(Formatting.RED);
-			this.gameSpace.getPlayers().sendMessage(deathMessage);
+		if (!this.isGameEnding()) {
+			PlayerRef playerRef = PlayerRef.of(player);
+			if (this.players.contains(playerRef)) {
+				this.coalAmounts.addTo(playerRef, -this.config.getDeathPrice());
+				this.clearCoal(player);
+
+				Text deathMessage = source.getDeathMessage(player).copy().formatted(Formatting.RED);
+				this.gameSpace.getPlayers().sendMessage(deathMessage);
+			}
 		}
 
 		CabinFeverActivePhase.spawn(this.world, this.map, player);
@@ -218,14 +237,16 @@ public class CabinFeverActivePhase {
 	}
 
 	private ActionResult onBreakBlock(ServerPlayerEntity player, ServerWorld world, BlockPos pos) {
-		BlockState state = world.getBlockState(pos);
+		if (!this.isGameEnding()) {
+			BlockState state = world.getBlockState(pos);
 
-		int coalAmount = CabinFeverActivePhase.getBlockCoalAmount(state);
-		if (coalAmount > 0) {
-			PlayerRef playerRef = PlayerRef.of(player);
-			if (this.players.contains(playerRef)) {
-				int coalUntilMax = this.config.getMaxHeldCoal() - player.getInventory().count(Items.COAL);
-				player.giveItemStack(new ItemStack(Items.COAL, Math.min(coalAmount, coalUntilMax)));
+			int coalAmount = CabinFeverActivePhase.getBlockCoalAmount(state);
+			if (coalAmount > 0) {
+				PlayerRef playerRef = PlayerRef.of(player);
+				if (this.players.contains(playerRef)) {
+					int coalUntilMax = this.config.getMaxHeldCoal() - player.getInventory().count(Items.COAL);
+					player.giveItemStack(new ItemStack(Items.COAL, Math.min(coalAmount, coalUntilMax)));
+				}
 			}
 		}
 
@@ -233,17 +254,19 @@ public class CabinFeverActivePhase {
 	}
 
 	private ActionResult onUseBlock(ServerPlayerEntity player, Hand hand, BlockHitResult hitResult) {
-		PlayerRef playerRef = PlayerRef.of(player);
-		if (this.players.contains(playerRef)) {
-			BlockState state = this.world.getBlockState(hitResult.getBlockPos());
-			if (state.isIn(BlockTags.CAMPFIRES)) {
-				int heldCoal = player.getInventory().count(Items.COAL);
-				int coalUntilMax = this.config.getMaxCoal() - this.coalAmounts.getInt(playerRef);
+		if (!this.isGameEnding()) {
+			PlayerRef playerRef = PlayerRef.of(player);
+			if (this.players.contains(playerRef)) {
+				BlockState state = this.world.getBlockState(hitResult.getBlockPos());
+				if (state.isIn(BlockTags.CAMPFIRES)) {
+					int heldCoal = player.getInventory().count(Items.COAL);
+					int coalUntilMax = this.config.getMaxCoal() - this.coalAmounts.getInt(playerRef);
 
-				this.coalAmounts.addTo(playerRef, Math.min(heldCoal, coalUntilMax));
-				this.clearCoal(player);
+					this.coalAmounts.addTo(playerRef, Math.min(heldCoal, coalUntilMax));
+					this.clearCoal(player);
 
-				player.playSound(SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM, SoundCategory.BLOCKS, 1, 1);
+					player.playSound(SoundEvents.ENTITY_ITEM_FRAME_ADD_ITEM, SoundCategory.BLOCKS, 1, 1);
+				}
 			}
 		}
 
