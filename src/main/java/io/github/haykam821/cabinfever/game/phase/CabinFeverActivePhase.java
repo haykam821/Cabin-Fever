@@ -73,6 +73,7 @@ public class CabinFeverActivePhase {
 		activity.deny(GameRuleType.HUNGER);
 		activity.deny(GameRuleType.PORTALS);
 		activity.allow(GameRuleType.PVP);
+		activity.deny(GameRuleType.SATURATED_REGENERATION);
 		activity.deny(GameRuleType.THROW_ITEMS);
 	}
 
