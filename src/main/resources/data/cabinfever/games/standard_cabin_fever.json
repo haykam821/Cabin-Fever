@@ -1,5 +1,6 @@
 {
 	"type": "cabinfever:cabin_fever",
+	"icon": "minecraft:coal",
 	"map": {
 		"x": 47,
 		"z": 47
