@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import eu.pb4.holograms.api.holograms.AbstractHologram;
+import eu.pb4.polymer.virtualentity.api.attachment.HolderAttachment;
 import io.github.haykam821.cabinfever.game.CabinFeverConfig;
 import io.github.haykam821.cabinfever.game.map.CabinFeverMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -48,14 +48,14 @@ public class CabinFeverActivePhase {
 	private final GameSpace gameSpace;
 	private final CabinFeverMap map;
 	private final CabinFeverConfig config;
-	private final AbstractHologram guideText;
+	private final HolderAttachment guideText;
 	private final Set<PlayerRef> players;
 	private final Object2IntOpenHashMap<PlayerRef> coalAmounts = new Object2IntOpenHashMap<>();
 	private boolean singleplayer;
 	private int ticks = 0;
 	private int ticksUntilClose = -1;
 
-	public CabinFeverActivePhase(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config, AbstractHologram guideText, Set<PlayerRef> players) {
+	public CabinFeverActivePhase(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config, HolderAttachment guideText, Set<PlayerRef> players) {
 		this.world = world;
 		this.gameSpace = gameSpace;
 		this.map = map;
@@ -76,7 +76,7 @@ public class CabinFeverActivePhase {
 		activity.deny(GameRuleType.THROW_ITEMS);
 	}
 
-	public static void open(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config, AbstractHologram guide) {
+	public static void open(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config, HolderAttachment guide) {
 		Set<PlayerRef> players = gameSpace.getPlayers().stream().map(PlayerRef::of).collect(Collectors.toSet());
 		CabinFeverActivePhase phase = new CabinFeverActivePhase(gameSpace, world, map, config, guide, players);
 
@@ -144,7 +144,7 @@ public class CabinFeverActivePhase {
 
 		this.ticks += 1;
 		if (this.guideText != null && ticks == this.config.getGuideTicks()) {
-			this.guideText.hide();
+			this.guideText.destroy();
 		}
 
 		// Eliminate players that do not have enough coal

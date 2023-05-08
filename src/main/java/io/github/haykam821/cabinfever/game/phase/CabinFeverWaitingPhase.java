@@ -1,12 +1,15 @@
 package io.github.haykam821.cabinfever.game.phase;
 
-import eu.pb4.holograms.api.Holograms;
-import eu.pb4.holograms.api.holograms.AbstractHologram;
-import eu.pb4.holograms.api.holograms.AbstractHologram.VerticalAlign;
+import eu.pb4.polymer.virtualentity.api.ElementHolder;
+import eu.pb4.polymer.virtualentity.api.attachment.ChunkAttachment;
+import eu.pb4.polymer.virtualentity.api.attachment.HolderAttachment;
+import eu.pb4.polymer.virtualentity.api.elements.TextDisplayElement;
 import io.github.haykam821.cabinfever.game.CabinFeverConfig;
 import io.github.haykam821.cabinfever.game.map.CabinFeverMap;
 import io.github.haykam821.cabinfever.game.map.CabinFeverMapBuilder;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.decoration.DisplayEntity.BillboardMode;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -30,19 +33,17 @@ import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
 public class CabinFeverWaitingPhase {
 	private static final Formatting GUIDE_FORMATTING = Formatting.GOLD;
-	private static final Text[] GUIDE_LINES = {
-		Text.translatable("gameType.cabinfever.cabin_fever").formatted(GUIDE_FORMATTING).formatted(Formatting.BOLD),
-		Text.translatable("text.cabinfever.guide.mine_coal").formatted(GUIDE_FORMATTING),
-		Text.translatable("text.cabinfever.guide.place_coal_in_campfire").formatted(GUIDE_FORMATTING),
-		Text.translatable("text.cabinfever.guide.dont_run_out_of_coal").formatted(GUIDE_FORMATTING),
-		Text.translatable("text.cabinfever.guide.death_expends_coal_faster").formatted(GUIDE_FORMATTING),
-	};
+	private static final Text GUIDE_TEXT = Text.empty()
+		.append(Text.translatable("gameType.cabinfever.cabin_fever").formatted(Formatting.BOLD))
+		.append(ScreenTexts.LINE_BREAK)
+		.append(Text.translatable("text.cabinfever.guide"))
+		.formatted(GUIDE_FORMATTING);
 
 	private final GameSpace gameSpace;
 	private final ServerWorld world;
 	private final CabinFeverMap map;
 	private final CabinFeverConfig config;
-	private AbstractHologram guideText;
+	private HolderAttachment guideText;
 
 	public CabinFeverWaitingPhase(GameSpace gameSpace, ServerWorld world, CabinFeverMap map, CabinFeverConfig config) {
 		this.gameSpace = gameSpace;
@@ -97,12 +98,16 @@ public class CabinFeverWaitingPhase {
 	}
 
 	private void enable() {
+		TextDisplayElement element = new TextDisplayElement(GUIDE_TEXT);
+
+		element.setBillboardMode(BillboardMode.CENTER);
+		element.setLineWidth(350);
+
+		ElementHolder holder = new ElementHolder();
+		holder.addElement(element);
+
 		// Spawn guide text
-		Vec3d center = Vec3d.of(this.map.getCenter()).add(0.5, 1.8, 0.5);
-
-		this.guideText = Holograms.create(this.world, center, GUIDE_LINES);
-		this.guideText.setAlignment(VerticalAlign.CENTER);
-
-		this.guideText.show();
+		Vec3d center = Vec3d.of(this.map.getCenter()).add(0.5, 1, 0.5);
+		this.guideText = ChunkAttachment.of(holder, world, center);
 	}
 }

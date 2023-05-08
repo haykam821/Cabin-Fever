@@ -2,10 +2,7 @@
 	"game.cabinfever.standard_cabin_fever": "Cabin Fever",
 	"gameType.cabinfever.cabin_fever": "Cabin Fever",
 	"text.cabinfever.eliminated": "%s has been eliminated!",
-	"text.cabinfever.guide.death_expends_coal_faster": "Getting killed expends your coal faster.",
-	"text.cabinfever.guide.dont_run_out_of_coal": "Don't let your coal meter reach zero!",
-	"text.cabinfever.guide.mine_coal": "Mine coal from the piles outside!",
-	"text.cabinfever.guide.place_coal_in_campfire": "Place your mined coal in the campfire.",
+	"text.cabinfever.guide": "Mine coal from the piles outside!\nPlace your mined coal in the campfire.\nDon't let your coal meter reach zero!\nGetting killed expends your coal faster.",
 	"text.cabinfever.no_winners": "Nobody won the game!",
 	"text.cabinfever.win": "%s has won the game!"
 }
